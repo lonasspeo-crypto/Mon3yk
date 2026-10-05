@@ -1,0 +1,65 @@
+{% extends "classifier/base.html" %}
+
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">Arsip Identifikasi</p>
+  <h1>Riwayat klasifikasi</h1>
+  <p>Hanya hasil yang melewati ambang keyakinan {{ threshold_pct }}% yang ditampilkan.</p>
+</section>
+
+<form class="history-filters" method="get" aria-label="Filter riwayat klasifikasi">
+  <label>
+    <span>Cari spesies</span>
+    <input type="search" name="q" value="{{ query }}" placeholder="Contoh: Bekantan">
+  </label>
+  <label>
+    <span>Urutkan</span>
+    <select name="urutkan">
+      <option value="terbaru"{% if selected_sort == 'terbaru' %} selected{% endif %}>Terbaru</option>
+      <option value="terlama"{% if selected_sort == 'terlama' %} selected{% endif %}>Terlama</option>
+      <option value="keyakinan_tertinggi"{% if selected_sort == 'keyakinan_tertinggi' %} selected{% endif %}>Keyakinan tertinggi</option>
+      <option value="keyakinan_terendah"{% if selected_sort == 'keyakinan_terendah' %} selected{% endif %}>Keyakinan terendah</option>
+    </select>
+  </label>
+  <label>
+    <span>Spesies</span>
+    <select name="spesies">
+      <option value="">Semua spesies</option>
+      {% for value, label in species_choices %}
+      <option value="{{ value }}"{% if selected_species == value %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="btn-secondary">Terapkan</button>
+</form>
+
+{% if daftar_riwayat %}
+<div class="riwayat-list riwayat-gallery">
+  {% for item in daftar_riwayat %}
+  <article class="riwayat-card">
+    <a href="{% url 'classifier:hasil' item.pk %}" class="riwayat-item">
+      <img src="{{ item.gambar.url }}" alt="Foto klasifikasi {{ item.nama_tampilan }}" width="640" height="480" loading="lazy" decoding="async">
+      <div class="riwayat-info">
+        <p class="riwayat-nama">{{ item.nama_tampilan }}</p>
+        <p class="riwayat-meta">{{ item.keyakinan }}% keyakinan &middot; {{ item.waktu|date:"d M Y, H:i" }}</p>
+        <span class="history-confidence" role="meter" aria-label="Tingkat keyakinan {{ item.keyakinan }} persen" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ item.keyakinan }}">
+          <span style="width: {{ item.keyakinan }}%"></span>
+        </span>
+      </div>
+    </a>
+    <form class="riwayat-delete" method="post" action="{% url 'classifier:hapus_riwayat' item.pk %}" onsubmit="return confirm('Hapus riwayat klasifikasi ini?')">
+      {% csrf_token %}
+      <button class="btn-text" type="submit">Hapus riwayat</button>
+    </form>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="specimen-card">
+  <p class="eyebrow">Belum Ada Riwayat</p>
+  <h2>Mulai dari satu foto primata.</h2>
+  <p>Hasil klasifikasi yang melewati ambang keyakinan akan muncul di halaman ini.</p>
+  <a class="btn-primary" href="{% url 'classifier:index' %}#klasifikasi">Mulai Identifikasi</a>
+</section>
+{% endif %}
+{% endblock %}
